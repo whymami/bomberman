@@ -22,11 +22,11 @@ struct Button {
 
 // Menü butonları
 std::vector<Button> menuButtons = {
-    {250, 600, 500, 50, "Single Play", false, false, 0.0},
+    {250, 280, 500, 50, "Single Play", false, false, 0.0},
     {250, 520, 500, 50, "Play Arena", false, false, 0.0},
     {250, 440, 500, 50, "Load Game", false, false, 0.0},   // Yer değiştirildi
     {250, 360, 500, 50, "Options", false, false, 0.0},     // Yer değiştirildi
-    {250, 280, 500, 50, "Exit", false, false, 0.0}
+    {250, 600, 500, 50, "Exit", false, false, 0.0}
 };
 
 
