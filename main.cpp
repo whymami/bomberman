@@ -1,5 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "lib/stb_image.h"
+#define STB_EASY_FONT_IMPLEMENTATION
+#include "lib/stb_easy_font.h"
+
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
@@ -24,56 +27,76 @@ struct Button {
 std::vector<Button> menuButtons = {
     {250, 280, 500, 50, "Single Play", false, false, 0.0},
     {250, 520, 500, 50, "Play Arena", false, false, 0.0},
-    {250, 440, 500, 50, "Load Game", false, false, 0.0},   // Yer değiştirildi
-    {250, 360, 500, 50, "Options", false, false, 0.0},     // Yer değiştirildi
+    {250, 440, 500, 50, "Load Game", false, false, 0.0},
+    {250, 360, 500, 50, "Options", false, false, 0.0},
     {250, 600, 500, 50, "Exit", false, false, 0.0}
 };
-
 
 // Arka plan çizimi
 void drawBackground() {
     glBegin(GL_QUADS);
     glColor3f(0.0f, 0.1f, 0.3f);
-    glVertex2f(-1.0f, 1.0f);
-    glVertex2f(1.0f, 1.0f);
+    glVertex2f(0, 0);
+    glVertex2f(WINDOW_WIDTH, 0);
     glColor3f(0.0f, 0.05f, 0.15f);
-    glVertex2f(1.0f, -1.0f);
-    glVertex2f(-1.0f, -1.0f);
+    glVertex2f(WINDOW_WIDTH, WINDOW_HEIGHT);
+    glVertex2f(0, WINDOW_HEIGHT);
     glEnd();
 
     glColor3f(0.0f, 0.2f, 0.4f);
     glLineWidth(1.0f);
-    for (int i = -10; i <= 10; i++) {
-        float pos = i * 0.2f;
+    for (int i = 0; i <= WINDOW_WIDTH; i += 100) {
         glBegin(GL_LINES);
-        glVertex2f(-1.0f, pos);
-        glVertex2f(1.0f, pos);
-        glVertex2f(pos, -1.0f);
-        glVertex2f(pos, 1.0f);
+        glVertex2f(i, 0);
+        glVertex2f(i, WINDOW_HEIGHT);
+        glEnd();
+    }
+    for (int i = 0; i <= WINDOW_HEIGHT; i += 100) {
+        glBegin(GL_LINES);
+        glVertex2f(0, i);
+        glVertex2f(WINDOW_WIDTH, i);
         glEnd();
     }
 }
 
+void drawText(float x, float y, const char* text, float r, float g, float b, float scale = 1.0f) {
+    char buffer[99999]; // Yeterince büyük buffer
+    int num_quads;
+
+    glPushMatrix();                      // Mevcut dönüşüm matrisini kaydet
+    glTranslatef(x, y, 0.0f);            // Yazının konumuna taşı
+    glScalef(scale, scale, 1.0f);        // Ölçek uygula (scale ile büyütme/küçültme)
+
+    glColor3f(r, g, b);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    num_quads = stb_easy_font_print(0, 0, (char*)text, NULL, buffer, sizeof(buffer)); // Artık (x, y) yerine (0, 0)
+    glVertexPointer(2, GL_FLOAT, 16, buffer);
+    glDrawArrays(GL_QUADS, 0, num_quads * 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+    glPopMatrix();                       // Önceki dönüşüm matrisine geri dön
+}
+
 // Buton çizimi
 void drawButton(const Button& button) {
-    float x = button.x / (float)WINDOW_WIDTH * 2.0f - 1.0f;
-    float y = 1.0f - (button.y / (float)WINDOW_HEIGHT * 2.0f);
-    float w = button.width / (float)WINDOW_WIDTH * 2.0f;
-    float h = button.height / (float)WINDOW_HEIGHT * 2.0f;
+    float x = button.x;
+    float y = button.y;
+    float w = button.width;
+    float h = button.height;
 
     // Arkaplan
     glBegin(GL_QUADS);
     if (button.isPressed) {
         glColor3f(0.168f, 0.168f, 0.168f);
     } else if (button.isHovered) {
-        glColor3f(0.6f, 0.6f, 0.6f);  // Hover
+        glColor3f(0.6f, 0.6f, 0.6f);
     } else {
-        glColor3f(0.4f, 0.4f, 0.4f);  // Normal
+        glColor3f(0.4f, 0.4f, 0.4f);
     }
     glVertex2f(x, y);
     glVertex2f(x + w, y);
-    glVertex2f(x + w, y - h);
-    glVertex2f(x, y - h);
+    glVertex2f(x + w, y + h);
+    glVertex2f(x, y + h);
     glEnd();
 
     // Çerçeve
@@ -81,10 +104,19 @@ void drawButton(const Button& button) {
     glColor3f(1.0f, 1.0f, 1.0f);
     glVertex2f(x, y);
     glVertex2f(x + w, y);
-    glVertex2f(x + w, y - h);
-    glVertex2f(x, y - h);
+    glVertex2f(x + w, y + h);
+    glVertex2f(x, y + h);
     glEnd();
+
+    // Yazı (ölçekli)
+    float scale = 2.0f; // 2 kat daha büyük yazı
+    float textWidth = button.text.length() * 10 * scale; // Yazının genişliği
+    float textX = x + (w - textWidth) / 2.0f;  // Yatayda ortalamak için
+    float textY = y + (h - scale * 12) / 2.0f;  // Dikeyde ortalamak için
+
+    drawText(textX, textY, button.text.c_str(), 1.0f, 1.0f, 1.0f, scale);
 }
+
 
 // Fare konumunu kontrol et
 void checkMousePosition(double x, double y) {
@@ -128,10 +160,9 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1); // burayı değiştir
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -154,7 +185,6 @@ int main() {
 
         double currentTime = glfwGetTime();
         for (auto& button : menuButtons) {
-            // 150 ms sonra basılma durumu sıfırlanıyor
             if (button.isPressed && currentTime - button.pressedTime > 0.15) {
                 button.isPressed = false;
             }
