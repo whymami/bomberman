@@ -26,9 +26,9 @@ struct Button {
 // Menü butonları
 std::vector<Button> menuButtons = {
     {250, 280, 500, 50, "Single Play", false, false, 0.0},
-    {250, 520, 500, 50, "Play Arena", false, false, 0.0},
+    {250, 360, 500, 50, "Play Arena", false, false, 0.0},
     {250, 440, 500, 50, "Load Game", false, false, 0.0},
-    {250, 360, 500, 50, "Options", false, false, 0.0},
+    {250, 520, 500, 50, "Options", false, false, 0.0},
     {250, 600, 500, 50, "Exit", false, false, 0.0}
 };
 
@@ -111,8 +111,8 @@ void drawButton(const Button& button) {
     // Yazı (ölçekli)
     float scale = 2.0f; // 2 kat daha büyük yazı
     float textWidth = button.text.length() * 10 * scale; // Yazının genişliği
-    float textX = x + (w - textWidth) / 2.0f;  // Yatayda ortalamak için
-    float textY = y + (h - scale * 12) / 2.0f;  // Dikeyde ortalamak için
+    float textX = x + (w) / 2.5f;  // Yatayda ortalamak için
+    float textY = y + (h - scale * 12) / 1.5f;  // Dikeyde ortalamak için
 
     drawText(textX, textY, button.text.c_str(), 1.0f, 1.0f, 1.0f, scale);
 }
