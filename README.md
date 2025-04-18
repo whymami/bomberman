@@ -9,3 +9,5 @@
     g++ main.cpp -o bomberman -lglfw -ldl -lGL
 
 ### makefile osType türüne göre kurulum yapacak 
+
+assimp kurldu

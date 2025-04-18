@@ -7,19 +7,14 @@ class Map
 private:
     int _width = 0;
     int _height = 0;
+    char **_map = nullptr;
 
 public:
-    Map(/* args */);
+    Map(char **map, int width, int height);
     ~Map();
 
     // GETTER
     int get_width();
     int get_height();
-
-    // SETTER
-    void set_width(int width);
-    void set_height(int height);
-
-    // FUNCTION
-    void load_map(std::string path);
+    char **get_map();
 };
