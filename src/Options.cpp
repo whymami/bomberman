@@ -1,5 +1,5 @@
-#include "Options.hpp"
-#include "lib/stb_easy_font.h"
+#include "../include/Options.hpp"
+#include "../lib/stb_easy_font.h"
 #include <iostream>
 
 Options::Options(Window* window) : isFullscreen(false), currentResolution(0),

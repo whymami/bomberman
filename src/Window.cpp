@@ -1,6 +1,6 @@
-#include "Window.hpp"
-#include "Options.hpp"
-#include "lib/stb_easy_font.h"
+#include "../include/Window.hpp"
+#include "../include/Options.hpp"
+#include "../lib/stb_easy_font.h"
 #include <iostream>
 
 Window::Window() : window(nullptr), options(nullptr), isInOptions(false), 

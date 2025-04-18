@@ -1,4 +1,5 @@
-#include <Controller.hpp>
+#pragma once 
+#include "Controller.hpp"
 #include "Bomb.hpp"
 
 class Player

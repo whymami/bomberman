@@ -1,4 +1,4 @@
-#include <Bomb.hpp>
+#include "../include/Bomb.hpp"
 
 Bomb::Bomb(/* args */)
 {

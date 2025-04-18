@@ -1,4 +1,4 @@
-#include <Player.hpp>
+#include "../include/Player.hpp"
 
 Player::Player(Controller *control, Bomb *bomb, void *player_texture) : control(control), bomb(bomb), player_texture(player_texture)
 {

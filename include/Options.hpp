@@ -1,3 +1,4 @@
+#pragma once 
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 

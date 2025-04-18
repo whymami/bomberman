@@ -1,4 +1,4 @@
-#include <Map.hpp>
+#include "../include/Map.hpp"
 
 Map::Map(char **map, int width, int height) : _width(width), _height(height)
 {

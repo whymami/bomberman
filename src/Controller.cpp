@@ -1,4 +1,4 @@
-#include <Controller.hpp>
+#include "../include/Controller.hpp"
 
 Controller::Controller(/* args */) {}
 Controller::~Controller() {}

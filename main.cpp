@@ -3,7 +3,7 @@
 #define STB_EASY_FONT_IMPLEMENTATION
 #include "lib/stb_easy_font.h"
 
-#include "Window.hpp"
+#include "include/Window.hpp"
 #include <iostream>
 
 int main() {
