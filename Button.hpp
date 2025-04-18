@@ -30,6 +30,7 @@ public:
     void setHovered(bool hovered);
     void setPressed(bool pressed);
     void setPressedTime(double time);
+    void setText(const std::string& newText);
 };
 
 #endif 

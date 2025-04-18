@@ -2,16 +2,29 @@
 #include "lib/stb_easy_font.h"
 #include <iostream>
 
-Options::Options() : isFullscreen(false), currentResolution(0),
+Options::Options(Window* window) : isFullscreen(false), currentResolution(0),
                     isShowingResolution(false), isShowingKeyBindings(false),
                     musicSlider(250, 550, 500, 40, "Music Volume", 0.5f),
-                    soundSlider(250, 630, 500, 40, "Sound Volume", 0.5f) {
+                    soundSlider(250, 630, 500, 40, "Sound Volume", 0.5f),
+                    parentWindow(window) {
+    initResolutions();
     createOptionButtons();
     createResolutionButtons();
     createKeyBindingButtons();
 }
 
 Options::~Options() {}
+
+void Options::initResolutions() {
+    availableResolutions = {
+        {800, 600, "800x600"},
+        {1024, 768, "1024x768"},
+        {1280, 720, "1280x720 (HD)"},
+        {1366, 768, "1366x768"},
+        {1600, 900, "1600x900"},
+        {1920, 1080, "1920x1080 (Full HD)"}
+    };
+}
 
 void Options::drawButton(const Button& button) {
     float x = button.getX();
@@ -70,20 +83,23 @@ void Options::drawText(float x, float y, const char* text, float r, float g, flo
 void Options::createOptionButtons() {
     optionButtons = {
         Button(250, 280, 500, 50, "Screen Resolution"),
-        Button(250, 360, 500, 50, "Fullscreen Mode"),
+        Button(250, 360, 500, 50, "Fullscreen Mode: Off"),
         Button(250, 440, 500, 50, "Key Bindings"),
         Button(250, 680, 500, 50, "Back")
     };
 }
 
 void Options::createResolutionButtons() {
-    resolutionButtons = {
-        Button(250, 280, 500, 50, "800x600"),
-        Button(250, 360, 500, 50, "1024x768"),
-        Button(250, 440, 500, 50, "1280x720"),
-        Button(250, 520, 500, 50, "1920x1080"),
-        Button(250, 600, 500, 50, "Back")
-    };
+    resolutionButtons.clear();
+    float y = 280;
+    
+    for (size_t i = 0; i < availableResolutions.size(); ++i) {
+        resolutionButtons.emplace_back(250, y, 500, 50, availableResolutions[i].text);
+        y += 80;
+    }
+    
+    // Add back button at the bottom
+    resolutionButtons.emplace_back(250, y, 500, 50, "Back");
 }
 
 void Options::createKeyBindingButtons() {
@@ -157,22 +173,28 @@ void Options::checkMousePosition(double x, double y) {
 
 bool Options::checkButtonClick(double x, double y) {
     if (isShowingResolution) {
-        for (auto& button : resolutionButtons) {
-            if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
-                y >= button.getY() && y <= button.getY() + button.getHeight()) {
-                button.setPressed(true);
-                button.setPressedTime(glfwGetTime());
+        for (size_t i = 0; i < resolutionButtons.size(); ++i) {
+            if (x >= resolutionButtons[i].getX() && x <= resolutionButtons[i].getX() + resolutionButtons[i].getWidth() &&
+                y >= resolutionButtons[i].getY() && y <= resolutionButtons[i].getY() + resolutionButtons[i].getHeight()) {
+                resolutionButtons[i].setPressed(true);
+                resolutionButtons[i].setPressedTime(glfwGetTime());
 
-                if (button.getText() == "Back") {
+                if (resolutionButtons[i].getText() == "Back") {
                     isShowingResolution = false;
                 } else {
-                    std::cout << "Resolution changed: " << button.getText() << std::endl;
+                    // Change resolution
+                    if (i < availableResolutions.size()) {
+                        currentResolution = i;
+                        parentWindow->setResolution(availableResolutions[i].width, availableResolutions[i].height);
+                        std::cout << "Resolution changed to: " << availableResolutions[i].text << std::endl;
+                    }
                 }
                 return false;
             }
         }
     } else if (isShowingKeyBindings) {
         for (auto& button : keyBindingButtons) {
+            button.setHovered(false);
             if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
                 y >= button.getY() && y <= button.getY() + button.getHeight()) {
                 button.setPressed(true);
@@ -204,11 +226,17 @@ bool Options::checkButtonClick(double x, double y) {
                 button.setPressed(true);
                 button.setPressedTime(glfwGetTime());
 
-                if (button.getText() == "Screen Resolution") {
+                if (button.getText().find("Screen Resolution") != std::string::npos) {
                     isShowingResolution = true;
-                } else if (button.getText() == "Fullscreen Mode") {
-                    isFullscreen = !isFullscreen;
-                    std::cout << "Fullscreen mode: " << (isFullscreen ? "On" : "Off") << std::endl;
+                } else if (button.getText().find("Fullscreen Mode") != std::string::npos) {
+                    parentWindow->toggleFullscreen();
+                    // Update button text based on fullscreen state
+                    for (auto& btn : optionButtons) {
+                        if (btn.getText().find("Fullscreen Mode") != std::string::npos) {
+                            btn.setText("Fullscreen Mode: " + std::string(parentWindow->getIsFullscreen() ? "On" : "Off"));
+                            break;
+                        }
+                    }
                 } else if (button.getText() == "Key Bindings") {
                     isShowingKeyBindings = true;
                 } else if (button.getText() == "Back") {

@@ -17,4 +17,5 @@ double Button::getPressedTime() const { return pressedTime; }
 
 void Button::setHovered(bool hovered) { isHovered = hovered; }
 void Button::setPressed(bool pressed) { isPressed = pressed; }
-void Button::setPressedTime(double time) { pressedTime = time; } 
+void Button::setPressedTime(double time) { pressedTime = time; }
+void Button::setText(const std::string& newText) { text = newText; }

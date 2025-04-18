@@ -5,6 +5,15 @@
 #include <GLFW/glfw3.h>
 #include "Button.hpp"
 #include "Slider.hpp"
+#include "Window.hpp"
+
+class Window;
+
+struct Resolution {
+    int width;
+    int height;
+    std::string text;
+};
 
 class Options {
 private:
@@ -14,6 +23,7 @@ private:
     std::vector<Button> optionButtons;
     std::vector<Button> resolutionButtons;
     std::vector<Button> keyBindingButtons;
+    std::vector<Resolution> availableResolutions;
     
     Slider musicSlider;
     Slider soundSlider;
@@ -22,15 +32,17 @@ private:
     int currentResolution;
     bool isShowingResolution;
     bool isShowingKeyBindings;
+    Window* parentWindow;
 
     void createOptionButtons();
     void createResolutionButtons();
     void createKeyBindingButtons();
     void drawButton(const Button& button);
     void drawText(float x, float y, const char* text, float r, float g, float b, float scale = 1.0f);
+    void initResolutions();
 
 public:
-    Options();
+    Options(Window* window);
     ~Options();
 
     void draw();

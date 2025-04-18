@@ -11,7 +11,7 @@ int main() {
         Window window;
         window.run();
     } catch (const std::exception& e) {
-        std::cerr << "Hata: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return -1;
     }
     return 0;

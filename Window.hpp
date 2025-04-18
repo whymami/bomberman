@@ -4,7 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include "Button.hpp"
-#include "Options.hpp"
+
+class Options;
 
 class Window {
 private:
@@ -13,13 +14,22 @@ private:
     
     GLFWwindow* window;
     std::vector<Button> menuButtons;
-    Options options;
+    Options* options;
     bool isInOptions;
+    bool isFullscreen;
+    int currentWidth;
+    int currentHeight;
+    int windowedPosX;
+    int windowedPosY;
+    int windowedWidth;
+    int windowedHeight;
 
     void initGLFW();
     void initOpenGL();
     void setupCallbacks();
     void createMenuButtons();
+    void updateViewport();
+    void updateProjectionMatrix();
 
 public:
     Window();
@@ -31,6 +41,13 @@ public:
     void drawButton(const Button& button);
     void checkMousePosition(double x, double y);
     void checkButtonClick(double x, double y);
+    void setResolution(int width, int height);
+    void centerWindow();
+    void toggleFullscreen();
+    bool getIsFullscreen() const { return isFullscreen; }
+    
+    int getCurrentWidth() const { return currentWidth; }
+    int getCurrentHeight() const { return currentHeight; }
 };
 
 #endif 

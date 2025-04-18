@@ -1,15 +1,21 @@
 #include "Window.hpp"
+#include "Options.hpp"
 #include "lib/stb_easy_font.h"
 #include <iostream>
 
-Window::Window() : window(nullptr), isInOptions(false) {
+Window::Window() : window(nullptr), options(nullptr), isInOptions(false), 
+                  isFullscreen(false), currentWidth(WINDOW_WIDTH), currentHeight(WINDOW_HEIGHT),
+                  windowedPosX(0), windowedPosY(0), windowedWidth(WINDOW_WIDTH), windowedHeight(WINDOW_HEIGHT) {
     initGLFW();
     initOpenGL();
     setupCallbacks();
     createMenuButtons();
+    options = new Options(this);
 }
 
 Window::~Window() {
+    delete options;
+
     if (window) {
         glfwDestroyWindow(window);
     }
@@ -34,16 +40,83 @@ void Window::initGLFW() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
 
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Bomberman", NULL, NULL);
+    window = glfwCreateWindow(currentWidth, currentHeight, "Bomberman", NULL, NULL);
     if (!window) {
         glfwTerminate();
         throw std::runtime_error("Failed to create GLFW window");
     }
 
     glfwMakeContextCurrent(window);
+    centerWindow();
+}
+
+void Window::centerWindow() {
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    if (!monitor) return;
+
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    if (!mode) return;
+
+    int monitorX, monitorY;
+    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+
+    int windowX = monitorX + (mode->width - currentWidth) / 2;
+    int windowY = monitorY + (mode->height - currentHeight) / 2;
+
+    glfwSetWindowPos(window, windowX, windowY);
+}
+
+void Window::updateViewport() {
+    // Set viewport to cover the entire window
+    glViewport(0, 0, currentWidth, currentHeight);
+    
+    // Calculate the aspect ratio
+    float targetAspectRatio = static_cast<float>(WINDOW_WIDTH) / WINDOW_HEIGHT;
+    float currentAspectRatio = static_cast<float>(currentWidth) / currentHeight;
+    
+    int viewportX = 0;
+    int viewportY = 0;
+    int viewportWidth = currentWidth;
+    int viewportHeight = currentHeight;
+    
+    // Adjust viewport to maintain aspect ratio
+    if (currentAspectRatio > targetAspectRatio) {
+        viewportWidth = static_cast<int>(currentHeight * targetAspectRatio);
+        viewportX = (currentWidth - viewportWidth) / 2;
+    } else if (currentAspectRatio < targetAspectRatio) {
+        viewportHeight = static_cast<int>(currentWidth / targetAspectRatio);
+        viewportY = (currentHeight - viewportHeight) / 2;
+    }
+    
+    glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+}
+
+void Window::setResolution(int width, int height) {
+    currentWidth = width;
+    currentHeight = height;
+    
+
+    int xpos, ypos;
+    glfwGetWindowPos(window, &xpos, &ypos);
+    // set window size
+    glfwSetWindowSize(window, width, height);
+    if (!window) {
+        std::cerr << "Failed to create window with new resolution" << std::endl;
+        return;
+    }
+    
+    updateViewport();
+    centerWindow();
+    
+    setupCallbacks();
+
 }
 
 void Window::initOpenGL() {
+    updateProjectionMatrix();
+}
+
+void Window::updateProjectionMatrix() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1);
@@ -54,10 +127,16 @@ void Window::initOpenGL() {
 void Window::setupCallbacks() {
     glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
         Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
+        // Scale mouse coordinates to match the original window size
+        double scaleX = static_cast<double>(WINDOW_WIDTH) / w->currentWidth;
+        double scaleY = static_cast<double>(WINDOW_HEIGHT) / w->currentHeight;
+        double scaledX = x * scaleX;
+        double scaledY = y * scaleY;
+        
         if (w->isInOptions) {
-            w->options.checkMousePosition(x, y);
+            w->options->checkMousePosition(scaledX, scaledY);
         } else {
-            w->checkMousePosition(x, y);
+            w->checkMousePosition(scaledX, scaledY);
         }
     });
 
@@ -67,15 +146,21 @@ void Window::setupCallbacks() {
             if (action == GLFW_PRESS) {
                 double x, y;
                 glfwGetCursorPos(win, &x, &y);
+                // Scale mouse coordinates to match the original window size
+                double scaleX = static_cast<double>(WINDOW_WIDTH) / w->currentWidth;
+                double scaleY = static_cast<double>(WINDOW_HEIGHT) / w->currentHeight;
+                double scaledX = x * scaleX;
+                double scaledY = y * scaleY;
+                
                 if (w->isInOptions) {
-                    if (w->options.checkButtonClick(x, y)) {
+                    if (w->options->checkButtonClick(scaledX, scaledY)) {
                         w->isInOptions = false;
                     }
                 } else {
-                    w->checkButtonClick(x, y);
+                    w->checkButtonClick(scaledX, scaledY);
                 }
             } else if (action == GLFW_RELEASE && w->isInOptions) {
-                w->options.handleMouseRelease();
+                w->options->handleMouseRelease();
             }
         }
     });
@@ -90,7 +175,7 @@ void Window::run() {
         drawBackground();
 
         if (isInOptions) {
-            options.draw();
+            options->draw();
         } else {
             double currentTime = glfwGetTime();
             for (auto& button : menuButtons) {
@@ -204,8 +289,14 @@ void Window::checkButtonClick(double x, double y) {
             std::cout << "Buton tıklandı: " << button.getText() << std::endl;
             button.setPressed(true);
             button.setPressedTime(glfwGetTime());
-
-            if (button.getText() == "Options") {
+            
+            if (button.getText() == "Single Play") {
+                // Start single play
+            }  else if (button.getText() == "Play Arena") {
+                // Load game
+            } else if (button.getText() == "Load Game") {
+                // Load game
+            } else if (button.getText() == "Options") {
                 isInOptions = true;
             } else if (button.getText() == "Exit") {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -213,4 +304,40 @@ void Window::checkButtonClick(double x, double y) {
             break;
         }
     }
-} 
+}
+
+void Window::toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    
+    if (isFullscreen) {
+        // Store windowed mode position and size
+        glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
+        windowedWidth = currentWidth;
+        windowedHeight = currentHeight;
+
+        // Get primary monitor
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+        // Switch to fullscreen with monitor's refresh rate
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        currentWidth = mode->width;
+        currentHeight = mode->height;
+    } else {
+        // Switch back to windowed mode
+        glfwSetWindowMonitor(window, nullptr, windowedPosX, windowedPosY, 
+                           windowedWidth, windowedHeight, GLFW_DONT_CARE);
+        currentWidth = windowedWidth;
+        currentHeight = windowedHeight;
+    }
+
+    // Update OpenGL state
+    glClear(GL_COLOR_BUFFER_BIT);
+    updateViewport();
+    updateProjectionMatrix();
+    setupCallbacks();
+    
+    // Force window system to update
+    glfwPollEvents();
+    glfwSwapBuffers(window);
+}
