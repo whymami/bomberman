@@ -1,4 +1,4 @@
-#include "../include/Button.hpp"
+#include "Button.hpp"
 
 Button::Button(float x, float y, float width, float height, const std::string& text)
     : x(x), y(y), width(width), height(height), text(text),

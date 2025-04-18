@@ -1,6 +1,6 @@
-#include "../include/Slider.hpp"
+#include "Slider.hpp"
 #include <GLFW/glfw3.h>
-#include "../lib/stb_easy_font.h"
+#include "stb_easy_font.h"
 #include <algorithm>
 
 Slider::Slider(float x, float y, float width, float height, const std::string& label, float initialValue)

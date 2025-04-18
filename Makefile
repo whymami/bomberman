@@ -1,8 +1,8 @@
 NAME = bomberman
-SRCS = main.cpp Window.cpp Button.cpp Options.cpp Slider.cpp
+SRCS = main.cpp src/Window.cpp src/Button.cpp src/Options.cpp src/Slider.cpp
 OBJS = $(SRCS:.cpp=.o)
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++17
+CXXFLAGS =  -std=c++17 -I./include -I./lib
 
 UNAME_S := $(shell uname -s)
 

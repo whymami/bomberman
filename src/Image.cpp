@@ -1,4 +1,4 @@
-#include "../include/Image.hpp"
+#include "Image.hpp"
 #include "stb_image.h"
 #include <GL/gl.h>
 #include <GL/glu.h>
