@@ -1,6 +1,6 @@
 NAME = bomberman
 SRCS = main.cpp src/Window.cpp src/Button.cpp src/Options.cpp src/Slider.cpp
-OBJS = $(SRCS:.cpp=.o)
+OBJS = $(addprefix bin/,$(notdir $(SRCS:.cpp=.o)))
 CXX = g++
 CXXFLAGS =  -std=c++17 -I./include -I./lib
 
@@ -18,20 +18,27 @@ ifeq ($(OS), Windows_NT)
 	LDFLAGS = -lglfw3 -lgdi32 -lopengl32
 endif
 
-all: $(NAME)
+all: bin $(NAME)
+
+bin:
+	mkdir -p bin
 
 $(NAME): $(OBJS)
 	$(CXX) $(OBJS) -o $(NAME) $(LIB_PATH) $(LDFLAGS)
 
-%.o: %.cpp
+bin/%.o: */%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+bin/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
+	rm -rf bin
 
 fclean: clean
 	rm -f $(NAME) game
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re bin
