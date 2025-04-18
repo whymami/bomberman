@@ -62,16 +62,20 @@ void Window::setupCallbacks() {
     });
 
     glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            double x, y;
-            glfwGetCursorPos(win, &x, &y);
-            Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
-            if (w->isInOptions) {
-                if (w->options.checkButtonClick(x, y)) {
-                    w->isInOptions = false;
+        Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            if (action == GLFW_PRESS) {
+                double x, y;
+                glfwGetCursorPos(win, &x, &y);
+                if (w->isInOptions) {
+                    if (w->options.checkButtonClick(x, y)) {
+                        w->isInOptions = false;
+                    }
+                } else {
+                    w->checkButtonClick(x, y);
                 }
-            } else {
-                w->checkButtonClick(x, y);
+            } else if (action == GLFW_RELEASE && w->isInOptions) {
+                w->options.handleMouseRelease();
             }
         }
     });

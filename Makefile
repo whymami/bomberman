@@ -1,5 +1,5 @@
 NAME = bomberman
-SRCS = main.cpp Window.cpp Button.cpp Options.cpp
+SRCS = main.cpp Window.cpp Button.cpp Options.cpp Slider.cpp
 OBJS = $(SRCS:.cpp=.o)
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++17

@@ -2,13 +2,12 @@
 #include "lib/stb_easy_font.h"
 #include <iostream>
 
-Options::Options() : isFullscreen(false), currentResolution(0), 
-                    musicVolume(50), soundVolume(50),
-                    isShowingResolution(false), isShowingVolume(false),
-                    isShowingKeyBindings(false) {
+Options::Options() : isFullscreen(false), currentResolution(0),
+                    isShowingResolution(false), isShowingKeyBindings(false),
+                    musicSlider(250, 550, 500, 40, "Music Volume", 0.5f),
+                    soundSlider(250, 630, 500, 40, "Sound Volume", 0.5f) {
     createOptionButtons();
     createResolutionButtons();
-    createVolumeButtons();
     createKeyBindingButtons();
 }
 
@@ -73,8 +72,6 @@ void Options::createOptionButtons() {
         Button(250, 280, 500, 50, "Screen Resolution"),
         Button(250, 360, 500, 50, "Fullscreen Mode"),
         Button(250, 440, 500, 50, "Key Bindings"),
-        Button(250, 520, 500, 50, "Music Volume"),
-        Button(250, 600, 500, 50, "Sound Volume"),
         Button(250, 680, 500, 50, "Back")
     };
 }
@@ -86,17 +83,6 @@ void Options::createResolutionButtons() {
         Button(250, 440, 500, 50, "1280x720"),
         Button(250, 520, 500, 50, "1920x1080"),
         Button(250, 600, 500, 50, "Back")
-    };
-}
-
-void Options::createVolumeButtons() {
-    volumeButtons = {
-        Button(250, 280, 500, 50, "Volume: 0%"),
-        Button(250, 360, 500, 50, "Volume: 25%"),
-        Button(250, 440, 500, 50, "Volume: 50%"),
-        Button(250, 520, 500, 50, "Volume: 75%"),
-        Button(250, 600, 500, 50, "Volume: 100%"),
-        Button(250, 680, 500, 50, "Back")
     };
 }
 
@@ -116,10 +102,6 @@ void Options::draw() {
         for (auto& button : resolutionButtons) {
             drawButton(button);
         }
-    } else if (isShowingVolume) {
-        for (auto& button : volumeButtons) {
-            drawButton(button);
-        }
     } else if (isShowingKeyBindings) {
         for (auto& button : keyBindingButtons) {
             drawButton(button);
@@ -128,6 +110,9 @@ void Options::draw() {
         for (auto& button : optionButtons) {
             drawButton(button);
         }
+        // Draw sliders in the main options menu
+        musicSlider.draw();
+        soundSlider.draw();
     }
 }
 
@@ -141,15 +126,6 @@ void Options::checkMousePosition(double x, double y) {
                 break;
             }
         }
-    } else if (isShowingVolume) {
-        for (auto& button : volumeButtons) {
-            button.setHovered(false);
-            if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
-                y >= button.getY() && y <= button.getY() + button.getHeight()) {
-                button.setHovered(true);
-                break;
-            }
-        }
     } else if (isShowingKeyBindings) {
         for (auto& button : keyBindingButtons) {
             button.setHovered(false);
@@ -167,6 +143,14 @@ void Options::checkMousePosition(double x, double y) {
                 button.setHovered(true);
                 break;
             }
+        }
+
+        // Update slider values if they're being dragged
+        if (musicSlider.getIsDragging()) {
+            musicSlider.updateValue(x);
+        }
+        if (soundSlider.getIsDragging()) {
+            soundSlider.updateValue(x);
         }
     }
 }
@@ -182,24 +166,7 @@ bool Options::checkButtonClick(double x, double y) {
                 if (button.getText() == "Back") {
                     isShowingResolution = false;
                 } else {
-                    // Çözünürlük ayarını güncelle
-                    std::cout << "Çözünürlük değiştirildi: " << button.getText() << std::endl;
-                }
-                return false;
-            }
-        }
-    } else if (isShowingVolume) {
-        for (auto& button : volumeButtons) {
-            if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
-                y >= button.getY() && y <= button.getY() + button.getHeight()) {
-                button.setPressed(true);
-                button.setPressedTime(glfwGetTime());
-
-                if (button.getText() == "Back") {
-                    isShowingVolume = false;
-                } else {
-                    // Ses seviyesini güncelle
-                    std::cout << "Ses seviyesi değiştirildi: " << button.getText() << std::endl;
+                    std::cout << "Resolution changed: " << button.getText() << std::endl;
                 }
                 return false;
             }
@@ -214,13 +181,23 @@ bool Options::checkButtonClick(double x, double y) {
                 if (button.getText() == "Back") {
                     isShowingKeyBindings = false;
                 } else {
-                    // Tuş atamasını güncelle
-                    std::cout << "Tuş ataması değiştirildi: " << button.getText() << std::endl;
+                    std::cout << "Key binding changed: " << button.getText() << std::endl;
                 }
                 return false;
             }
         }
     } else {
+        // Check sliders first
+        if (musicSlider.checkMousePosition(x, y)) {
+            musicSlider.setDragging(true);
+            return false;
+        }
+        if (soundSlider.checkMousePosition(x, y)) {
+            soundSlider.setDragging(true);
+            return false;
+        }
+
+        // Then check buttons
         for (auto& button : optionButtons) {
             if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
                 y >= button.getY() && y <= button.getY() + button.getHeight()) {
@@ -231,15 +208,10 @@ bool Options::checkButtonClick(double x, double y) {
                     isShowingResolution = true;
                 } else if (button.getText() == "Fullscreen Mode") {
                     isFullscreen = !isFullscreen;
-                    std::cout << "Tam ekran modu: " << (isFullscreen ? "Açık" : "Kapalı") << std::endl;
+                    std::cout << "Fullscreen mode: " << (isFullscreen ? "On" : "Off") << std::endl;
                 } else if (button.getText() == "Key Bindings") {
                     isShowingKeyBindings = true;
-                } else if (button.getText() == "Music Volume") {
-                    isShowingVolume = true;
-                } else if (button.getText() == "Sound Volume") {
-                    isShowingVolume = true;
                 } else if (button.getText() == "Back") {
-                    // Ana menüye dön
                     return true;
                 }
                 return false;
@@ -249,7 +221,12 @@ bool Options::checkButtonClick(double x, double y) {
     return false;
 }
 
+void Options::handleMouseRelease() {
+    musicSlider.setDragging(false);
+    soundSlider.setDragging(false);
+}
+
 bool Options::getIsFullscreen() const { return isFullscreen; }
 int Options::getCurrentResolution() const { return currentResolution; }
-int Options::getMusicVolume() const { return musicVolume; }
-int Options::getSoundVolume() const { return soundVolume; } 
+float Options::getMusicVolume() const { return musicSlider.getValue(); }
+float Options::getSoundVolume() const { return soundSlider.getValue(); } 
