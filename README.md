@@ -37,3 +37,7 @@ sudo make install
 
 GLM
 İndirme linki: https://github.com/g-truc/glm/releases
+
+
+sudo apt-get install libglfw3-dev libglew-dev libassimp-dev libglm-dev
+g++ test.cpp -o tnt_viewer -I/usr/local/include -L/usr/local/lib -lglfw -lGLEW -lassimp -lGL
