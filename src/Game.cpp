@@ -1,9 +1,10 @@
 #include "Game.hpp"
 
-Game::Game(/* args */)
+Game::Game()
 {
     _PlayerList = new std::map<std::string, Player *>();
     _MapList = new std::map<std::string, Map *>();
+
 }
 
 Game::~Game()
