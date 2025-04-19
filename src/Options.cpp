@@ -4,8 +4,8 @@
 
 Options::Options(Window* window) : isFullscreen(false), currentResolution(0),
                     isShowingResolution(false), isShowingKeyBindings(false),
-                    musicSlider(250, 550, 500, 40, "Music Volume", 0.5f),
-                    soundSlider(250, 630, 500, 40, "Sound Volume", 0.5f),
+                    musicSlider(200, 550, 600, 40, "Music Volume", 0.5f),
+                    soundSlider(200, 630, 600, 40, "Sound Volume", 0.5f),
                     parentWindow(window) {
     initResolutions();
     createOptionButtons();
@@ -33,8 +33,10 @@ void Options::drawButton(const Button& button) {
     float h = button.getHeight();
 
     glBegin(GL_QUADS);
-    if (button.getIsPressed()) {
-        glColor3f(0.168f, 0.168f, 0.168f);
+    if (button.getIsDisabled()) {
+        glColor3f(0.168f, 0.168f, 0.168f);  // Dark gray for disabled state
+    } else if (button.getIsPressed()) {
+        glColor3f(0.2f, 0.2f, 0.2f);  // Slightly lighter gray for pressed state
     } else if (button.getIsHovered()) {
         glColor3f(0.6f, 0.6f, 0.6f);
     } else {
@@ -59,7 +61,12 @@ void Options::drawButton(const Button& button) {
     float textX = x + (w) / 2.5f;
     float textY = y + (h - scale * 12) / 1.5f;
 
-    drawText(textX, textY, button.getText().c_str(), 1.0f, 1.0f, 1.0f, scale);
+    // Use a different color for disabled text
+    if (button.getIsDisabled()) {
+        drawText(textX, textY, button.getText().c_str(), 0.8f, 0.8f, 0.8f, scale);  // Light gray text
+    } else {
+        drawText(textX, textY, button.getText().c_str(), 1.0f, 1.0f, 1.0f, scale);  // White text
+    }
 }
 
 void Options::drawText(float x, float y, const char* text, float r, float g, float b, float scale) {
@@ -81,35 +88,52 @@ void Options::drawText(float x, float y, const char* text, float r, float g, flo
 }
 
 void Options::createOptionButtons() {
+    const float buttonWidth = 600;  // Increased from 500
+    const float buttonHeight = 50;
+    const float startX = (1000 - buttonWidth) / 2;  // Center horizontally in 1000x1000 window
+
     optionButtons = {
-        Button(250, 280, 500, 50, "Screen Resolution"),
-        Button(250, 360, 500, 50, "Fullscreen Mode: Off"),
-        Button(250, 440, 500, 50, "Key Bindings"),
-        Button(250, 680, 500, 50, "Back")
+        Button(startX, 280, buttonWidth, buttonHeight, "Screen Resolution"),
+        Button(startX, 360, buttonWidth, buttonHeight, "Fullscreen Mode: Windowed"),
+        Button(startX, 440, buttonWidth, buttonHeight, "Key Bindings"),
+        Button(startX, 680, buttonWidth, buttonHeight, "Back")
     };
 }
 
 void Options::createResolutionButtons() {
-    resolutionButtons.clear();
+    const float buttonWidth = 600;
+    const float buttonHeight = 50;
+    const float startX = (1000 - buttonWidth) / 2;
     float y = 280;
     
+    resolutionButtons.clear();
+    
     for (size_t i = 0; i < availableResolutions.size(); ++i) {
-        resolutionButtons.emplace_back(250, y, 500, 50, availableResolutions[i].text);
+        resolutionButtons.emplace_back(startX, y, buttonWidth, buttonHeight, availableResolutions[i].text);
+        // Disable the current resolution button
+        if (i == currentResolution) {
+            resolutionButtons.back().setDisabled(true);
+            resolutionButtons.back().setPressed(true);  // Make it appear selected
+        }
         y += 80;
     }
     
     // Add back button at the bottom
-    resolutionButtons.emplace_back(250, y, 500, 50, "Back");
+    resolutionButtons.emplace_back(startX, y, buttonWidth, buttonHeight, "Back");
 }
 
 void Options::createKeyBindingButtons() {
+    const float buttonWidth = 600;  // Increased from 500
+    const float buttonHeight = 50;
+    const float startX = (1000 - buttonWidth) / 2;  // Center horizontally
+
     keyBindingButtons = {
-        Button(250, 280, 500, 50, "Move Up: W"),
-        Button(250, 360, 500, 50, "Move Down: S"),
-        Button(250, 440, 500, 50, "Move Left: A"),
-        Button(250, 520, 500, 50, "Move Right: D"),
-        Button(250, 600, 500, 50, "Place Bomb: Space"),
-        Button(250, 680, 500, 50, "Back")
+        Button(startX, 280, buttonWidth, buttonHeight, "Move Up: W"),
+        Button(startX, 360, buttonWidth, buttonHeight, "Move Down: S"),
+        Button(startX, 440, buttonWidth, buttonHeight, "Move Left: A"),
+        Button(startX, 520, buttonWidth, buttonHeight, "Move Right: D"),
+        Button(startX, 600, buttonWidth, buttonHeight, "Place Bomb: Space"),
+        Button(startX, 680, buttonWidth, buttonHeight, "Back")
     };
 }
 
@@ -171,30 +195,66 @@ void Options::checkMousePosition(double x, double y) {
     }
 }
 
+void Options::resetButtonStates() {
+    // Reset all button states
+    for (auto& button : optionButtons) {
+        button.setPressed(false);
+        button.setHovered(false);
+    }
+    for (auto& button : resolutionButtons) {
+        button.setPressed(false);
+        button.setHovered(false);
+    }
+    for (auto& button : keyBindingButtons) {
+        button.setPressed(false);
+        button.setHovered(false);
+    }
+}
+
 bool Options::checkButtonClick(double x, double y) {
+    // Reset all buttons' pressed state first
+    auto resetButtonPressState = [](auto& buttons) {
+        for (auto& btn : buttons) {
+            if (!btn.getIsDisabled()) {  // Don't reset disabled buttons
+                btn.setPressed(false);
+            }
+        }
+    };
+
     if (isShowingResolution) {
+        resetButtonPressState(resolutionButtons);
         for (size_t i = 0; i < resolutionButtons.size(); ++i) {
             if (x >= resolutionButtons[i].getX() && x <= resolutionButtons[i].getX() + resolutionButtons[i].getWidth() &&
                 y >= resolutionButtons[i].getY() && y <= resolutionButtons[i].getY() + resolutionButtons[i].getHeight()) {
+                
+                // Skip if button is disabled
+                if (resolutionButtons[i].getIsDisabled()) {
+                    return false;
+                }
+
                 resolutionButtons[i].setPressed(true);
                 resolutionButtons[i].setPressedTime(glfwGetTime());
 
                 if (resolutionButtons[i].getText() == "Back") {
                     isShowingResolution = false;
+                    resetButtonStates();
                 } else {
                     // Change resolution
                     if (i < availableResolutions.size()) {
                         currentResolution = i;
                         parentWindow->setResolution(availableResolutions[i].width, availableResolutions[i].height);
                         std::cout << "Resolution changed to: " << availableResolutions[i].text << std::endl;
+                        
+                        // Recreate resolution buttons to update disabled state
+                        createResolutionButtons();
                     }
                 }
                 return false;
             }
         }
     } else if (isShowingKeyBindings) {
+        resetButtonPressState(keyBindingButtons);
         for (auto& button : keyBindingButtons) {
-            button.setHovered(false);
             if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
                 y >= button.getY() && y <= button.getY() + button.getHeight()) {
                 button.setPressed(true);
@@ -202,6 +262,7 @@ bool Options::checkButtonClick(double x, double y) {
 
                 if (button.getText() == "Back") {
                     isShowingKeyBindings = false;
+                    resetButtonStates();  // Reset all button states when going back
                 } else {
                     std::cout << "Key binding changed: " << button.getText() << std::endl;
                 }
@@ -219,6 +280,9 @@ bool Options::checkButtonClick(double x, double y) {
             return false;
         }
 
+        // Reset option buttons' pressed state
+        resetButtonPressState(optionButtons);
+
         // Then check buttons
         for (auto& button : optionButtons) {
             if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
@@ -228,18 +292,21 @@ bool Options::checkButtonClick(double x, double y) {
 
                 if (button.getText().find("Screen Resolution") != std::string::npos) {
                     isShowingResolution = true;
+                    resetButtonStates();  // Reset all button states when switching to resolution menu
                 } else if (button.getText().find("Fullscreen Mode") != std::string::npos) {
                     parentWindow->toggleFullscreen();
                     // Update button text based on fullscreen state
                     for (auto& btn : optionButtons) {
                         if (btn.getText().find("Fullscreen Mode") != std::string::npos) {
-                            btn.setText("Fullscreen Mode: " + std::string(parentWindow->getIsFullscreen() ? "On" : "Off"));
+                            btn.setText("Fullscreen Mode: " + std::string(parentWindow->getIsFullscreen() ? "Full Screen" : "Windowed"));
                             break;
                         }
                     }
                 } else if (button.getText() == "Key Bindings") {
                     isShowingKeyBindings = true;
+                    resetButtonStates();  // Reset all button states when switching to key bindings menu
                 } else if (button.getText() == "Back") {
+                    resetButtonStates();  // Reset all button states when going back to main menu
                     return true;
                 }
                 return false;

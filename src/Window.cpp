@@ -23,12 +23,16 @@ Window::~Window() {
 }
 
 void Window::createMenuButtons() {
+    const float buttonWidth = 600;
+    const float buttonHeight = 50;
+    const float startX = (WINDOW_WIDTH - buttonWidth) / 2;
+
     menuButtons = {
-        Button(250, 280, 500, 50, "Single Play"),
-        Button(250, 360, 500, 50, "Play Arena"),
-        Button(250, 440, 500, 50, "Load Game"),
-        Button(250, 520, 500, 50, "Options"),
-        Button(250, 600, 500, 50, "Exit")
+        Button(startX, 280, buttonWidth, buttonHeight, "Single Play"),
+        Button(startX, 360, buttonWidth, buttonHeight, "Play Arena"),
+        Button(startX, 440, buttonWidth, buttonHeight, "Load Game"),
+        Button(startX, 520, buttonWidth, buttonHeight, "Options"),
+        Button(startX, 600, buttonWidth, buttonHeight, "Exit")
     };
 }
 
@@ -51,72 +55,47 @@ void Window::initGLFW() {
 }
 
 void Window::centerWindow() {
+    if (isFullscreen) return;  // Don't center if in fullscreen mode
+
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     if (!monitor) return;
 
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     if (!mode) return;
 
-    int monitorX, monitorY;
-    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+    int monitorX, monitorY, monitorWidth, monitorHeight;
+    glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-    int windowX = monitorX + (mode->width - currentWidth) / 2;
-    int windowY = monitorY + (mode->height - currentHeight) / 2;
+    // Get actual window size (including decorations)
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
+    // Calculate window position to center it in the monitor's workarea
+    int windowX = monitorX + (monitorWidth - windowWidth) / 2;
+    int windowY = monitorY + (monitorHeight - windowHeight) / 2;
+
+    // Set window position
     glfwSetWindowPos(window, windowX, windowY);
+    
+    // Wait for the window system to update
+    glfwWaitEvents();
 }
 
 void Window::updateViewport() {
-    // Set viewport to cover the entire window
-    glViewport(0, 0, currentWidth, currentHeight);
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     
-    // Calculate the aspect ratio
-    float targetAspectRatio = static_cast<float>(WINDOW_WIDTH) / WINDOW_HEIGHT;
-    float currentAspectRatio = static_cast<float>(currentWidth) / currentHeight;
-    
-    int viewportX = 0;
-    int viewportY = 0;
-    int viewportWidth = currentWidth;
-    int viewportHeight = currentHeight;
-    
-    // Adjust viewport to maintain aspect ratio
-    if (currentAspectRatio > targetAspectRatio) {
-        viewportWidth = static_cast<int>(currentHeight * targetAspectRatio);
-        viewportX = (currentWidth - viewportWidth) / 2;
-    } else if (currentAspectRatio < targetAspectRatio) {
-        viewportHeight = static_cast<int>(currentWidth / targetAspectRatio);
-        viewportY = (currentHeight - viewportHeight) / 2;
-    }
-    
-    glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-}
-
-void Window::setResolution(int width, int height) {
-    currentWidth = width;
-    currentHeight = height;
-    
-
-    int xpos, ypos;
-    glfwGetWindowPos(window, &xpos, &ypos);
-    // set window size
-    glfwSetWindowSize(window, width, height);
-    if (!window) {
-        std::cerr << "Failed to create window with new resolution" << std::endl;
-        return;
-    }
-    
-    updateViewport();
-    centerWindow();
-    
-    setupCallbacks();
-
-}
-
-void Window::initOpenGL() {
-    updateProjectionMatrix();
+    // Use full framebuffer size without maintaining aspect ratio
+    glViewport(0, 0, fbWidth, fbHeight);
+    currentWidth = fbWidth;
+    currentHeight = fbHeight;
 }
 
 void Window::updateProjectionMatrix() {
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    
+    // Set up projection to stretch content to fill the window
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1);
@@ -124,19 +103,73 @@ void Window::updateProjectionMatrix() {
     glLoadIdentity();
 }
 
+void Window::setResolution(int width, int height) {
+    windowedWidth = width;
+    windowedHeight = height;
+
+    if (isFullscreen) {
+        // If in fullscreen, store the new resolution but don't apply it yet
+        return;
+    }
+
+    // Set window size
+    glfwSetWindowSize(window, width, height);
+    
+    // Wait for the window system to update
+    glfwWaitEvents();
+    
+    // Get the actual framebuffer size
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    currentWidth = fbWidth;
+    currentHeight = fbHeight;
+    
+    // Center window before updating OpenGL state
+    centerWindow();
+    
+    // Update OpenGL state
+    updateViewport();
+    updateProjectionMatrix();
+}
+
+void Window::initOpenGL() {
+    updateProjectionMatrix();
+}
+
+void Window::transformMouseCoordinates(double& x, double& y) {
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    
+    // Get the window size (in screen coordinates)
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    
+    // Scale from window coordinates to framebuffer coordinates
+    x = x * (static_cast<double>(fbWidth) / windowWidth);
+    y = y * (static_cast<double>(fbHeight) / windowHeight);
+    
+    // Transform to our logical coordinate system
+    x = (x / fbWidth) * WINDOW_WIDTH;
+    y = (y / fbHeight) * WINDOW_HEIGHT;
+}
+
 void Window::setupCallbacks() {
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int width, int height) {
+        Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
+        w->currentWidth = width;
+        w->currentHeight = height;
+        w->updateViewport();
+        w->updateProjectionMatrix();
+    });
+
     glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
         Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
-        // Scale mouse coordinates to match the original window size
-        double scaleX = static_cast<double>(WINDOW_WIDTH) / w->currentWidth;
-        double scaleY = static_cast<double>(WINDOW_HEIGHT) / w->currentHeight;
-        double scaledX = x * scaleX;
-        double scaledY = y * scaleY;
+        w->transformMouseCoordinates(x, y);
         
         if (w->isInOptions) {
-            w->options->checkMousePosition(scaledX, scaledY);
+            w->options->checkMousePosition(x, y);
         } else {
-            w->checkMousePosition(scaledX, scaledY);
+            w->checkMousePosition(x, y);
         }
     });
 
@@ -146,18 +179,14 @@ void Window::setupCallbacks() {
             if (action == GLFW_PRESS) {
                 double x, y;
                 glfwGetCursorPos(win, &x, &y);
-                // Scale mouse coordinates to match the original window size
-                double scaleX = static_cast<double>(WINDOW_WIDTH) / w->currentWidth;
-                double scaleY = static_cast<double>(WINDOW_HEIGHT) / w->currentHeight;
-                double scaledX = x * scaleX;
-                double scaledY = y * scaleY;
+                w->transformMouseCoordinates(x, y);
                 
                 if (w->isInOptions) {
-                    if (w->options->checkButtonClick(scaledX, scaledY)) {
+                    if (w->options->checkButtonClick(x, y)) {
                         w->isInOptions = false;
                     }
                 } else {
-                    w->checkButtonClick(scaledX, scaledY);
+                    w->checkButtonClick(x, y);
                 }
             } else if (action == GLFW_RELEASE && w->isInOptions) {
                 w->options->handleMouseRelease();
@@ -171,7 +200,6 @@ void Window::setupCallbacks() {
 void Window::run() {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
-
         drawBackground();
 
         if (isInOptions) {
@@ -283,6 +311,11 @@ void Window::checkMousePosition(double x, double y) {
 }
 
 void Window::checkButtonClick(double x, double y) {
+    // Reset all buttons' pressed state first
+    for (auto& button : menuButtons) {
+        button.setPressed(false);
+    }
+
     for (auto& button : menuButtons) {
         if (x >= button.getX() && x <= button.getX() + button.getWidth() &&
             y >= button.getY() && y <= button.getY() + button.getHeight()) {
@@ -310,34 +343,16 @@ void Window::toggleFullscreen() {
     isFullscreen = !isFullscreen;
     
     if (isFullscreen) {
-        // Store windowed mode position and size
         glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
         windowedWidth = currentWidth;
         windowedHeight = currentHeight;
 
-        // Get primary monitor
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-        // Switch to fullscreen with monitor's refresh rate
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-        currentWidth = mode->width;
-        currentHeight = mode->height;
     } else {
-        // Switch back to windowed mode
         glfwSetWindowMonitor(window, nullptr, windowedPosX, windowedPosY, 
                            windowedWidth, windowedHeight, GLFW_DONT_CARE);
-        currentWidth = windowedWidth;
-        currentHeight = windowedHeight;
     }
-
-    // Update OpenGL state
-    glClear(GL_COLOR_BUFFER_BIT);
-    updateViewport();
-    updateProjectionMatrix();
-    setupCallbacks();
-    
-    // Force window system to update
-    glfwPollEvents();
-    glfwSwapBuffers(window);
 }

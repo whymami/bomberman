@@ -45,6 +45,7 @@ public:
     void centerWindow();
     void toggleFullscreen();
     bool getIsFullscreen() const { return isFullscreen; }
+    void transformMouseCoordinates(double& x, double& y);
     
     int getCurrentWidth() const { return currentWidth; }
     int getCurrentHeight() const { return currentHeight; }

@@ -1,5 +1,4 @@
-#ifndef BUTTON_HPP
-#define BUTTON_HPP
+#pragma once
 
 #include <string>
 
@@ -12,11 +11,11 @@ private:
     std::string text;
     bool isHovered;
     bool isPressed;
+    bool isDisabled;
     double pressedTime;
 
 public:
     Button(float x, float y, float width, float height, const std::string& text);
-    ~Button();
 
     float getX() const;
     float getY() const;
@@ -25,12 +24,12 @@ public:
     const std::string& getText() const;
     bool getIsHovered() const;
     bool getIsPressed() const;
+    bool getIsDisabled() const;
     double getPressedTime() const;
 
     void setHovered(bool hovered);
     void setPressed(bool pressed);
+    void setDisabled(bool disabled);
     void setPressedTime(double time);
     void setText(const std::string& newText);
-};
-
-#endif 
+}; 
