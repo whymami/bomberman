@@ -11,7 +11,6 @@ int main() {
     try {
         Window window;
         window.run();
-        load_json("config.json");
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return -1;
