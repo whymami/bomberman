@@ -1,10 +1,13 @@
 NAME = bomberman
-SRCS = test.cpp src/Window.cpp src/Button.cpp src/Options.cpp src/Slider.cpp
+SRC_DIR = src
+SRCS =  main.cpp $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(addprefix bin/,$(notdir $(SRCS:.cpp=.o)))
 CXX = g++
 CXXFLAGS = -std=c++17 -I./include -I./lib -I./lib/glad/include
 GLAD_URL = https://gen.glad.sh/generated/tmps9st6gpcglad/glad.zip
 GLAD_DIR = lib/glad
+JSON_LIB_URL = https://github.com/nlohmann/json/releases/download/v3.11.2/json.hpp
+JSON_LIB_DIR = lib/json
 
 UNAME_S := $(shell uname -s)
 
@@ -20,7 +23,7 @@ ifeq ($(OS), Windows_NT)
 	LDFLAGS = -lglfw3 -lgdi32 -lopengl32 -lassimp
 endif
 
-all: bin lib setup_glad $(NAME)
+all: bin lib setup_glad setup_json $(NAME)
 
 bin:
 	mkdir -p bin
@@ -38,6 +41,17 @@ setup_glad: lib
 		echo "GLAD library has been set up successfully."; \
 	else \
 		echo "GLAD library is already set up."; \
+	fi
+
+setup_json: lib
+	@if [ ! -d "$(JSON_LIB_DIR)" ]; then \
+		echo "Downloading JSON library..."; \
+		curl -L $(JSON_LIB_URL) -o json.hpp; \
+		mkdir -p $(JSON_LIB_DIR); \
+		mv json.hpp $(JSON_LIB_DIR); \
+		echo "JSON library has been set up successfully."; \
+	else \
+		echo "JSON library is already set up."; \
 	fi
 
 $(NAME): $(OBJS) $(GLAD_DIR)/src/gl.o
@@ -59,7 +73,8 @@ clean:
 fclean: clean
 	rm -f $(NAME) game
 	rm -rf $(GLAD_DIR)
+	rm -rf $(JSON_LIB_DIR)
 
 re: fclean all
 
-.PHONY: all clean fclean re bin lib setup_glad
+.PHONY: all clean fclean re bin lib setup_glad json_lib
