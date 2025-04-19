@@ -2,12 +2,15 @@ NAME = bomberman
 SRC_DIR = src
 SRCS =  main.cpp $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(addprefix bin/,$(notdir $(SRCS:.cpp=.o)))
+GLAD_OBJ = bin/gl.o
 CXX = g++
 CXXFLAGS = -std=c++17 -I./include -I./lib -I./lib/glad/include
-GLAD_URL = https://gen.glad.sh/generated/tmps9st6gpcglad/glad.zip
-GLAD_DIR = lib/glad
-JSON_LIB_URL = https://github.com/nlohmann/json/releases/download/v3.11.2/json.hpp
 JSON_LIB_DIR = lib/json
+GLAD_DIR = lib/glad
+GLAD_URL = https://gen.glad.sh/generated/tmps9st6gpcglad/glad.zip
+JSON_LIB_URL = https://github.com/nlohmann/json/releases/download/v3.11.2/json.hpp
+STB_EASY_FONT_URL = https://raw.githubusercontent.com/nothings/stb/master/stb_easy_font.h
+STB_IMAGE_URL = https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
 
 UNAME_S := $(shell uname -s)
 
@@ -30,6 +33,9 @@ bin:
 
 lib:
 	mkdir -p lib
+	# Download STB libraries if they don't exist
+	test -f lib/stb_easy_font.h || curl -o lib/stb_easy_font.h $(STB_EASY_FONT_URL)
+	test -f lib/stb_image.h || curl -o lib/stb_image.h $(STB_IMAGE_URL)
 
 setup_glad: lib
 	@if [ ! -d "$(GLAD_DIR)" ]; then \
@@ -54,11 +60,11 @@ setup_json: lib
 		echo "JSON library is already set up."; \
 	fi
 
-$(NAME): $(OBJS) $(GLAD_DIR)/src/gl.o
-	$(CXX) $(OBJS) $(GLAD_DIR)/src/gl.o -o $(NAME) $(LIB_PATH) $(LDFLAGS)
+$(NAME): $(OBJS) $(GLAD_OBJ)
+	$(CXX) $(OBJS) $(GLAD_OBJ) -o $(NAME) $(LIB_PATH) $(LDFLAGS)
 
-$(GLAD_DIR)/src/gl.o: setup_glad
-	$(CXX) $(CXXFLAGS) -c $(GLAD_DIR)/src/gl.c -o $(GLAD_DIR)/src/gl.o
+$(GLAD_OBJ): setup_glad
+	$(CXX) $(CXXFLAGS) -c $(GLAD_DIR)/src/gl.c -o $(GLAD_OBJ)
 
 bin/%.o: */%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -68,12 +74,15 @@ bin/%.o: %.cpp
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(GLAD_OBJ)
 	rm -rf bin
+	rm -f lib/stb_easy_font.h lib/stb_image.h
+	rm -rf $(GLAD_DIR)
+	rm -rf $(JSON_LIB_DIR)
 
 fclean: clean
 	rm -f $(NAME) game
-	rm -rf $(GLAD_DIR)
-	rm -rf $(JSON_LIB_DIR)
+	rm -rf lib
 
 re: fclean all
 

@@ -38,8 +38,6 @@ private:
     void createOptionButtons();
     void createResolutionButtons();
     void createKeyBindingButtons();
-    void drawButton(const Button& button);
-    void drawText(float x, float y, const char* text, float r, float g, float b, float scale = 1.0f);
     void initResolutions();
     void resetButtonStates();
 
