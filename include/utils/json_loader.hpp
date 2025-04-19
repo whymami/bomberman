@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 
-nlohmann::json load_json(const std::string &filename)
+inline nlohmann::json load_json(const std::string &filename)
 {
     nlohmann::json jsonData;
 

@@ -97,7 +97,10 @@ void Slider::setDragging(bool dragging) {
 }
 
 float Slider::getValue() const { return value; }
-void Slider::setValue(float newValue) { value = std::max(0.0f, std::min(1.0f, newValue)); }
+void Slider::setValue(float newValue) {
+    // Clamp value between 0 and 1
+    value = std::max(0.0f, std::min(1.0f, newValue));
+}
 float Slider::getX() const { return x; }
 float Slider::getY() const { return y; }
 float Slider::getWidth() const { return width; }

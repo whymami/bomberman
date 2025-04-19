@@ -1,8 +1,11 @@
-#include "Options.hpp"
-#include "stb_easy_font.h"
+#include <Settings.hpp>
+#include <stb_easy_font.h>
+#include <utils/json_loader.hpp>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
 
-Options::Options(Window* window) : isFullscreen(false), currentResolution(0),
+Settings::Settings(Window* window) : isFullscreen(false), currentResolution(0),
                     isShowingResolution(false), isShowingKeyBindings(false),
                     musicSlider(200, 550, 600, 40, "Music Volume", 0.5f),
                     soundSlider(200, 630, 600, 40, "Sound Volume", 0.5f),
@@ -11,11 +14,69 @@ Options::Options(Window* window) : isFullscreen(false), currentResolution(0),
     createOptionButtons();
     createResolutionButtons();
     createKeyBindingButtons();
+    loadSettings();
 }
 
-Options::~Options() {}
+Settings::~Settings() {
+    saveSettings();
+}
 
-void Options::initResolutions() {
+std::string Settings::getSettingsPath() const {
+    return "settings/settings.json";
+}
+
+void Settings::saveSettings() const {
+    std::filesystem::create_directories("settings");
+
+    nlohmann::json settings;
+    settings["fullscreen"] = isFullscreen;
+    settings["resolution"] = currentResolution;
+    settings["music_volume"] = musicSlider.getValue();
+    settings["sound_volume"] = soundSlider.getValue();
+
+    std::ofstream file(getSettingsPath());
+    if (file.is_open()) {
+        file << settings.dump(4);  // Pretty print with 4 spaces indent
+        file.close();
+    }
+}
+
+void Settings::loadSettings() {
+    try {
+        nlohmann::json settings = load_json(getSettingsPath());
+        
+        if (!settings.empty()) {
+            if (settings.contains("fullscreen")) {
+                isFullscreen = settings["fullscreen"];
+                if (isFullscreen) {
+                    parentWindow->toggleFullscreen();
+                }
+            }
+            
+            if (settings.contains("resolution")) {
+                currentResolution = settings["resolution"];
+                if (currentResolution < availableResolutions.size()) {
+                    parentWindow->setResolution(
+                        availableResolutions[currentResolution].width,
+                        availableResolutions[currentResolution].height
+                    );
+                }
+            }
+            
+            if (settings.contains("music_volume")) {
+                musicSlider.setValue(settings["music_volume"]);
+            }
+            
+            if (settings.contains("sound_volume")) {
+                soundSlider.setValue(settings["sound_volume"]);
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading settings: " << e.what() << std::endl;
+    }
+}
+
+void Settings::initResolutions() {
     availableResolutions = {
         {800, 600, "800x600"},
         {1024, 768, "1024x768"},
@@ -26,7 +87,7 @@ void Options::initResolutions() {
     };
 }
 
-void Options::createOptionButtons() {
+void Settings::createOptionButtons() {
     const float buttonWidth = 600;  // Increased from 500
     const float buttonHeight = 50;
     const float startX = (1000 - buttonWidth) / 2;  // Center horizontally in 1000x1000 window
@@ -39,7 +100,7 @@ void Options::createOptionButtons() {
     };
 }
 
-void Options::createResolutionButtons() {
+void Settings::createResolutionButtons() {
     const float buttonWidth = 600;
     const float buttonHeight = 50;
     const float startX = (1000 - buttonWidth) / 2;
@@ -61,7 +122,7 @@ void Options::createResolutionButtons() {
     resolutionButtons.emplace_back(startX, y, buttonWidth, buttonHeight, "Back");
 }
 
-void Options::createKeyBindingButtons() {
+void Settings::createKeyBindingButtons() {
     const float buttonWidth = 600;  // Increased from 500
     const float buttonHeight = 50;
     const float startX = (1000 - buttonWidth) / 2;  // Center horizontally
@@ -76,7 +137,7 @@ void Options::createKeyBindingButtons() {
     };
 }
 
-void Options::draw() {
+void Settings::draw() {
     if (isShowingResolution) {
         for (auto& button : resolutionButtons) {
             button.draw();
@@ -89,13 +150,13 @@ void Options::draw() {
         for (auto& button : optionButtons) {
             button.draw();
         }
-        // Draw sliders in the main options menu
+        // Draw sliders in the main Settings menu
         musicSlider.draw();
         soundSlider.draw();
     }
 }
 
-void Options::checkMousePosition(double x, double y) {
+void Settings::checkMousePosition(double x, double y) {
     if (isShowingResolution) {
         for (auto& button : resolutionButtons) {
             button.setHovered(false);
@@ -134,7 +195,7 @@ void Options::checkMousePosition(double x, double y) {
     }
 }
 
-void Options::resetButtonStates() {
+void Settings::resetButtonStates() {
     // Reset all button states
     for (auto& button : optionButtons) {
         button.setPressed(false);
@@ -150,7 +211,7 @@ void Options::resetButtonStates() {
     }
 }
 
-bool Options::checkButtonClick(double x, double y) {
+bool Settings::checkButtonClick(double x, double y) {
     // Reset all buttons' pressed state first
     auto resetButtonPressState = [](auto& buttons) {
         for (auto& btn : buttons) {
@@ -255,12 +316,12 @@ bool Options::checkButtonClick(double x, double y) {
     return false;
 }
 
-void Options::handleMouseRelease() {
+void Settings::handleMouseRelease() {
     musicSlider.setDragging(false);
     soundSlider.setDragging(false);
 }
 
-bool Options::getIsFullscreen() const { return isFullscreen; }
-int Options::getCurrentResolution() const { return currentResolution; }
-float Options::getMusicVolume() const { return musicSlider.getValue(); }
-float Options::getSoundVolume() const { return soundSlider.getValue(); } 
+bool Settings::getIsFullscreen() const { return isFullscreen; }
+int Settings::getCurrentResolution() const { return currentResolution; }
+float Settings::getMusicVolume() const { return musicSlider.getValue(); }
+float Settings::getSoundVolume() const { return soundSlider.getValue(); } 

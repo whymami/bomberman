@@ -1,6 +1,4 @@
 #pragma once 
-#ifndef OPTIONS_HPP
-#define OPTIONS_HPP
 
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -16,7 +14,7 @@ struct Resolution {
     std::string text;
 };
 
-class Options {
+class Settings {
 private:
     static const int WINDOW_WIDTH = 1000;
     static const int WINDOW_HEIGHT = 1000;
@@ -39,11 +37,13 @@ private:
     void createResolutionButtons();
     void createKeyBindingButtons();
     void initResolutions();
-    void resetButtonStates();
+    void saveSettings() const;
+    void loadSettings();
+    std::string getSettingsPath() const;
 
 public:
-    Options(Window* window);
-    ~Options();
+    Settings(Window* window);
+    ~Settings();
 
     void draw();
     void checkMousePosition(double x, double y);
@@ -54,6 +54,5 @@ public:
     int getCurrentResolution() const;
     float getMusicVolume() const;
     float getSoundVolume() const;
+    void resetButtonStates();
 };
-
-#endif 

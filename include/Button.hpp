@@ -36,5 +36,5 @@ public:
     void setPressedTime(double time);
     void setText(const std::string& newText);
 
-    void draw() const;  // New method to draw the button
+    void draw() const;
 }; 

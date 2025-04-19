@@ -4,11 +4,11 @@
 #include <vector>
 #include "Button.hpp"
 
-class Options;
+class Settings;
 
 enum class Tab {
     MAIN_MENU,
-    OPTIONS,
+    SETTINGS,
     SINGLE_PLAY,
     PLAY_ARENA,
     LOAD_GAME
@@ -21,7 +21,7 @@ private:
     
     GLFWwindow* window;
     std::vector<Button> menuButtons;
-    Options* options;
+    Settings* settings;
     bool isFullscreen;
     int currentWidth;
     int currentHeight;
@@ -44,8 +44,6 @@ public:
 
     void run();
     void drawBackground();
-    void drawText(float x, float y, const char* text, float r, float g, float b, float scale = 1.0f);
-    void drawButton(const Button& button);
     void checkMousePosition(double x, double y);
     void checkButtonClick(double x, double y);
     void setResolution(int width, int height);

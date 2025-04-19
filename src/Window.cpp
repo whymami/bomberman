@@ -1,9 +1,9 @@
-#include "Window.hpp"
-#include "Options.hpp"
-#include "stb_easy_font.h"
+#include <Window.hpp>
+#include <Settings.hpp>
+#include <stb_easy_font.h>
 #include <iostream>
 
-Window::Window() : window(nullptr), options(nullptr), 
+Window::Window() : window(nullptr), settings(nullptr), 
                   isFullscreen(false), currentWidth(WINDOW_WIDTH), currentHeight(WINDOW_HEIGHT),
                   windowedPosX(0), windowedPosY(0), windowedWidth(WINDOW_WIDTH), windowedHeight(WINDOW_HEIGHT),
                   activeTab(Tab::MAIN_MENU) {
@@ -11,11 +11,11 @@ Window::Window() : window(nullptr), options(nullptr),
     initOpenGL();
     setupCallbacks();
     createMenuButtons();
-    options = new Options(this);
+    settings = new Settings(this);
 }
 
 Window::~Window() {
-    delete options;
+    delete settings;
 
     if (window) {
         glfwDestroyWindow(window);
@@ -32,7 +32,7 @@ void Window::createMenuButtons() {
         Button(startX, 280, buttonWidth, buttonHeight, "Single Play"),
         Button(startX, 360, buttonWidth, buttonHeight, "Play Arena"),
         Button(startX, 440, buttonWidth, buttonHeight, "Load Game"),
-        Button(startX, 520, buttonWidth, buttonHeight, "Options"),
+        Button(startX, 520, buttonWidth, buttonHeight, "Settings"),
         Button(startX, 600, buttonWidth, buttonHeight, "Exit")
     };
 }
@@ -168,8 +168,8 @@ void Window::setupCallbacks() {
         w->transformMouseCoordinates(x, y);
         
         switch (w->activeTab) {
-            case Tab::OPTIONS:
-                w->options->checkMousePosition(x, y);
+            case Tab::SETTINGS:
+                w->settings->checkMousePosition(x, y);
                 break;
             case Tab::MAIN_MENU:
             default:
@@ -187,8 +187,8 @@ void Window::setupCallbacks() {
                 w->transformMouseCoordinates(x, y);
                 
                 switch (w->activeTab) {
-                    case Tab::OPTIONS:
-                        if (w->options->checkButtonClick(x, y)) {
+                    case Tab::SETTINGS:
+                        if (w->settings->checkButtonClick(x, y)) {
                             w->activeTab = Tab::MAIN_MENU;
                         }
                         break;
@@ -197,8 +197,8 @@ void Window::setupCallbacks() {
                         w->checkButtonClick(x, y);
                         break;
                 }
-            } else if (action == GLFW_RELEASE && w->activeTab == Tab::OPTIONS) {
-                w->options->handleMouseRelease();
+            } else if (action == GLFW_RELEASE && w->activeTab == Tab::SETTINGS) {
+                w->settings->handleMouseRelease();
             }
         }
     });
@@ -212,8 +212,8 @@ void Window::run() {
         drawBackground();
 
         switch (activeTab) {
-            case Tab::OPTIONS:
-                options->draw();
+            case Tab::SETTINGS:
+                settings->draw();
                 break;
             case Tab::SINGLE_PLAY:
                 //game->init();
@@ -267,24 +267,6 @@ void Window::drawBackground() {
     }
 }
 
-void Window::drawText(float x, float y, const char* text, float r, float g, float b, float scale) {
-    char buffer[99999];
-    int num_quads;
-
-    glPushMatrix();
-    glTranslatef(x, y, 0.0f);
-    glScalef(scale, scale, 1.0f);
-
-    glColor3f(r, g, b);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    num_quads = stb_easy_font_print(0, 0, (char*)text, NULL, buffer, sizeof(buffer));
-    glVertexPointer(2, GL_FLOAT, 16, buffer);
-    glDrawArrays(GL_QUADS, 0, num_quads * 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    glPopMatrix();
-}
-
 void Window::checkMousePosition(double x, double y) {
     for (auto& button : menuButtons) {
         button.setHovered(false);
@@ -315,8 +297,8 @@ void Window::checkButtonClick(double x, double y) {
                 activeTab = Tab::PLAY_ARENA;
             } else if (button.getText() == "Load Game") {
                 activeTab = Tab::LOAD_GAME;
-            } else if (button.getText() == "Options") {
-                activeTab = Tab::OPTIONS;
+            } else if (button.getText() == "Settings") {
+                activeTab = Tab::SETTINGS;
             } else if (button.getText() == "Exit") {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
             }
@@ -337,6 +319,8 @@ void Window::toggleFullscreen() {
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+
+        centerWindow();
     } else {
         glfwSetWindowMonitor(window, nullptr, windowedPosX, windowedPosY, 
                            windowedWidth, windowedHeight, GLFW_DONT_CARE);

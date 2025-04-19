@@ -1,7 +1,7 @@
-#ifndef SLIDER_HPP
-#define SLIDER_HPP
+#pragma once
 
 #include <string>
+#include <GLFW/glfw3.h>
 
 class Slider {
 private:
@@ -30,6 +30,4 @@ public:
     float getHeight() const;
     const std::string& getLabel() const;
     bool getIsDragging() const;
-};
-
-#endif 
+}; 
