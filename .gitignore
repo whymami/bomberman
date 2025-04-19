@@ -9,6 +9,7 @@ bomberman
 *.lo
 *.o
 *.obj
+lib
 
 # Precompiled Headers
 *.gch
