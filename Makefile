@@ -1,6 +1,6 @@
 NAME = bomberman
 SRC_DIR = src
-SRCS =  main.cpp $(wildcard $(SRC_DIR)/*.cpp)
+SRCS =  test/test.cpp $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(addprefix bin/,$(notdir $(SRCS:.cpp=.o)))
 GLAD_OBJ = bin/gl.o
 CXX = g++

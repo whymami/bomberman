@@ -11,9 +11,11 @@ private:
     Bomb *bomb;
     Controller *control;
     void *player_texture;
+    int x = 1;
+    int y = 1;
 
 public:
-    Player(Controller *control, Bomb *bomb, void *player_texture);
+    Player(Controller *control, Bomb *bomb, void *player_texture, int x, int y);
     ~Player();
 
     // GETTER
