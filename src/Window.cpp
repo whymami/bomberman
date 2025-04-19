@@ -3,9 +3,10 @@
 #include "stb_easy_font.h"
 #include <iostream>
 
-Window::Window() : window(nullptr), options(nullptr), isInOptions(false), 
+Window::Window() : window(nullptr), options(nullptr), 
                   isFullscreen(false), currentWidth(WINDOW_WIDTH), currentHeight(WINDOW_HEIGHT),
-                  windowedPosX(0), windowedPosY(0), windowedWidth(WINDOW_WIDTH), windowedHeight(WINDOW_HEIGHT) {
+                  windowedPosX(0), windowedPosY(0), windowedWidth(WINDOW_WIDTH), windowedHeight(WINDOW_HEIGHT),
+                  activeTab(Tab::MAIN_MENU) {
     initGLFW();
     initOpenGL();
     setupCallbacks();
@@ -166,10 +167,14 @@ void Window::setupCallbacks() {
         Window* w = static_cast<Window*>(glfwGetWindowUserPointer(win));
         w->transformMouseCoordinates(x, y);
         
-        if (w->isInOptions) {
-            w->options->checkMousePosition(x, y);
-        } else {
-            w->checkMousePosition(x, y);
+        switch (w->activeTab) {
+            case Tab::OPTIONS:
+                w->options->checkMousePosition(x, y);
+                break;
+            case Tab::MAIN_MENU:
+            default:
+                w->checkMousePosition(x, y);
+                break;
         }
     });
 
@@ -181,14 +186,18 @@ void Window::setupCallbacks() {
                 glfwGetCursorPos(win, &x, &y);
                 w->transformMouseCoordinates(x, y);
                 
-                if (w->isInOptions) {
-                    if (w->options->checkButtonClick(x, y)) {
-                        w->isInOptions = false;
-                    }
-                } else {
-                    w->checkButtonClick(x, y);
+                switch (w->activeTab) {
+                    case Tab::OPTIONS:
+                        if (w->options->checkButtonClick(x, y)) {
+                            w->activeTab = Tab::MAIN_MENU;
+                        }
+                        break;
+                    case Tab::MAIN_MENU:
+                    default:
+                        w->checkButtonClick(x, y);
+                        break;
                 }
-            } else if (action == GLFW_RELEASE && w->isInOptions) {
+            } else if (action == GLFW_RELEASE && w->activeTab == Tab::OPTIONS) {
                 w->options->handleMouseRelease();
             }
         }
@@ -202,16 +211,29 @@ void Window::run() {
         glClear(GL_COLOR_BUFFER_BIT);
         drawBackground();
 
-        if (isInOptions) {
-            options->draw();
-        } else {
-            double currentTime = glfwGetTime();
-            for (auto& button : menuButtons) {
-                if (button.getIsPressed() && currentTime - button.getPressedTime() > 0.15) {
-                    button.setPressed(false);
+        switch (activeTab) {
+            case Tab::OPTIONS:
+                options->draw();
+                break;
+            case Tab::SINGLE_PLAY:
+                //game->init();
+                break;
+            case Tab::PLAY_ARENA:
+                // TODO: Implement arena rendering
+                break;
+            case Tab::LOAD_GAME:
+                // TODO: Implement load game rendering
+                break;
+            case Tab::MAIN_MENU:
+            default:
+                double currentTime = glfwGetTime();
+                for (auto& button : menuButtons) {
+                    if (button.getIsPressed() && currentTime - button.getPressedTime() > 0.15) {
+                        button.setPressed(false);
+                    }
+                    button.draw();
                 }
-                drawButton(button);
-            }
+                break;
         }
 
         glfwSwapBuffers(window);
@@ -263,42 +285,6 @@ void Window::drawText(float x, float y, const char* text, float r, float g, floa
     glPopMatrix();
 }
 
-void Window::drawButton(const Button& button) {
-    float x = button.getX();
-    float y = button.getY();
-    float w = button.getWidth();
-    float h = button.getHeight();
-
-    glBegin(GL_QUADS);
-    if (button.getIsPressed()) {
-        glColor3f(0.168f, 0.168f, 0.168f);
-    } else if (button.getIsHovered()) {
-        glColor3f(0.6f, 0.6f, 0.6f);
-    } else {
-        glColor3f(0.4f, 0.4f, 0.4f);
-    }
-    glVertex2f(x, y);
-    glVertex2f(x + w, y);
-    glVertex2f(x + w, y + h);
-    glVertex2f(x, y + h);
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glVertex2f(x, y);
-    glVertex2f(x + w, y);
-    glVertex2f(x + w, y + h);
-    glVertex2f(x, y + h);
-    glEnd();
-
-    float scale = 2.0f;
-    float textWidth = button.getText().length() * 10 * scale;
-    float textX = x + (w) / 2.5f;
-    float textY = y + (h - scale * 12) / 1.5f;
-
-    drawText(textX, textY, button.getText().c_str(), 1.0f, 1.0f, 1.0f, scale);
-}
-
 void Window::checkMousePosition(double x, double y) {
     for (auto& button : menuButtons) {
         button.setHovered(false);
@@ -324,13 +310,13 @@ void Window::checkButtonClick(double x, double y) {
             button.setPressedTime(glfwGetTime());
             
             if (button.getText() == "Single Play") {
-                // Start single play
-            }  else if (button.getText() == "Play Arena") {
-                // Load game
+                activeTab = Tab::SINGLE_PLAY;
+            } else if (button.getText() == "Play Arena") {
+                activeTab = Tab::PLAY_ARENA;
             } else if (button.getText() == "Load Game") {
-                // Load game
+                activeTab = Tab::LOAD_GAME;
             } else if (button.getText() == "Options") {
-                isInOptions = true;
+                activeTab = Tab::OPTIONS;
             } else if (button.getText() == "Exit") {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
             }

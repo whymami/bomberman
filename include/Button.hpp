@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <GLFW/glfw3.h>
 
 class Button {
 private:
@@ -13,6 +14,8 @@ private:
     bool isPressed;
     bool isDisabled;
     double pressedTime;
+
+    void drawText(float x, float y, const char* text, float r, float g, float b, float scale = 1.0f);
 
 public:
     Button(float x, float y, float width, float height, const std::string& text);
@@ -32,4 +35,6 @@ public:
     void setDisabled(bool disabled);
     void setPressedTime(double time);
     void setText(const std::string& newText);
+
+    void draw() const;  // New method to draw the button
 }; 

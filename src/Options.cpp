@@ -26,67 +26,6 @@ void Options::initResolutions() {
     };
 }
 
-void Options::drawButton(const Button& button) {
-    float x = button.getX();
-    float y = button.getY();
-    float w = button.getWidth();
-    float h = button.getHeight();
-
-    glBegin(GL_QUADS);
-    if (button.getIsDisabled()) {
-        glColor3f(0.168f, 0.168f, 0.168f);  // Dark gray for disabled state
-    } else if (button.getIsPressed()) {
-        glColor3f(0.2f, 0.2f, 0.2f);  // Slightly lighter gray for pressed state
-    } else if (button.getIsHovered()) {
-        glColor3f(0.6f, 0.6f, 0.6f);
-    } else {
-        glColor3f(0.4f, 0.4f, 0.4f);
-    }
-    glVertex2f(x, y);
-    glVertex2f(x + w, y);
-    glVertex2f(x + w, y + h);
-    glVertex2f(x, y + h);
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glVertex2f(x, y);
-    glVertex2f(x + w, y);
-    glVertex2f(x + w, y + h);
-    glVertex2f(x, y + h);
-    glEnd();
-
-    float scale = 2.0f;
-    float textWidth = button.getText().length() * 10 * scale;
-    float textX = x + (w) / 2.5f;
-    float textY = y + (h - scale * 12) / 1.5f;
-
-    // Use a different color for disabled text
-    if (button.getIsDisabled()) {
-        drawText(textX, textY, button.getText().c_str(), 0.8f, 0.8f, 0.8f, scale);  // Light gray text
-    } else {
-        drawText(textX, textY, button.getText().c_str(), 1.0f, 1.0f, 1.0f, scale);  // White text
-    }
-}
-
-void Options::drawText(float x, float y, const char* text, float r, float g, float b, float scale) {
-    char buffer[99999];
-    int num_quads;
-
-    glPushMatrix();
-    glTranslatef(x, y, 0.0f);
-    glScalef(scale, scale, 1.0f);
-
-    glColor3f(r, g, b);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    num_quads = stb_easy_font_print(0, 0, (char*)text, NULL, buffer, sizeof(buffer));
-    glVertexPointer(2, GL_FLOAT, 16, buffer);
-    glDrawArrays(GL_QUADS, 0, num_quads * 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    glPopMatrix();
-}
-
 void Options::createOptionButtons() {
     const float buttonWidth = 600;  // Increased from 500
     const float buttonHeight = 50;
@@ -140,15 +79,15 @@ void Options::createKeyBindingButtons() {
 void Options::draw() {
     if (isShowingResolution) {
         for (auto& button : resolutionButtons) {
-            drawButton(button);
+            button.draw();
         }
     } else if (isShowingKeyBindings) {
         for (auto& button : keyBindingButtons) {
-            drawButton(button);
+            button.draw();
         }
     } else {
         for (auto& button : optionButtons) {
-            drawButton(button);
+            button.draw();
         }
         // Draw sliders in the main options menu
         musicSlider.draw();

@@ -1,11 +1,18 @@
-#ifndef WINDOW_HPP
-#define WINDOW_HPP
+#pragma once
 
 #include <GLFW/glfw3.h>
 #include <vector>
 #include "Button.hpp"
 
 class Options;
+
+enum class Tab {
+    MAIN_MENU,
+    OPTIONS,
+    SINGLE_PLAY,
+    PLAY_ARENA,
+    LOAD_GAME
+};
 
 class Window {
 private:
@@ -15,7 +22,6 @@ private:
     GLFWwindow* window;
     std::vector<Button> menuButtons;
     Options* options;
-    bool isInOptions;
     bool isFullscreen;
     int currentWidth;
     int currentHeight;
@@ -23,6 +29,7 @@ private:
     int windowedPosY;
     int windowedWidth;
     int windowedHeight;
+    Tab activeTab;
 
     void initGLFW();
     void initOpenGL();
@@ -49,6 +56,4 @@ public:
     
     int getCurrentWidth() const { return currentWidth; }
     int getCurrentHeight() const { return currentHeight; }
-};
-
-#endif 
+}; 
