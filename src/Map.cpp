@@ -1,7 +1,14 @@
 #include "Map.hpp"
+#include <utils/json_loader.hpp>
 
-Map::Map(char **map, int width, int height) : _width(width), _height(height)
+Map::Map(const std::string &level, std::map<std::string, Player *> *playerList)
 {
+    std::string path = "levels/" + level + ".json";
+
+    nlohmann::json json = load_json(path);
+    _width = json["width"];
+    _height = json["height"];
+    _map = json["map"].get<std::vector<std::string>>();
 }
 
 Map::~Map()
@@ -19,7 +26,27 @@ int Map::get_height()
     return _width;
 }
 
-char **Map::get_map()
+std::vector<std::string> Map::get_map()
 {
     return _map;
+}
+
+void Map::draw_map()
+{
+    for (int i = 0; i < _height; i++)
+    {
+        for (int j = 0; j < _width; j++)
+        {
+            if (_map[i][j] == '1')
+                std::cout
+                    << "█";
+            else if (_map[i][j] == '0')
+                std::cout
+                    << " ";
+            else
+                std::cout << _map[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "Width: " << _width << ", Height: " << _height << std::endl;
 }

@@ -1,9 +1,9 @@
 NAME = bomberman
 SRC_DIR = src
-SRCS =  main.cpp $(wildcard $(SRC_DIR)/*.cpp)
+SRCS =  test/test.cpp $(wildcard $(SRC_DIR)/*.cpp)
 OBJS = $(addprefix bin/,$(notdir $(SRCS:.cpp=.o)))
 CXX = g++
-CXXFLAGS = -std=c++17 -I./include -I./lib -I./lib/glad/include
+CXXFLAGS = -std=c++17 -I./include -I./lib -I./lib/glad/include -I./lib/json
 GLAD_URL = https://gen.glad.sh/generated/tmps9st6gpcglad/glad.zip
 GLAD_DIR = lib/glad
 JSON_LIB_URL = https://github.com/nlohmann/json/releases/download/v3.11.2/json.hpp

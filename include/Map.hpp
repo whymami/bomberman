@@ -1,20 +1,23 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <map>
+#include <Player.hpp>
 
 class Map
 {
 private:
     int _width = 0;
     int _height = 0;
-    char **_map = nullptr;
+    std::vector<std::string> _map;
 
 public:
-    Map(char **map, int width, int height);
+    Map(const std::string &path, std::map<std::string, Player *> *playerList);
     ~Map();
 
     // GETTER
     int get_width();
     int get_height();
-    char **get_map();
+    std::vector<std::string> get_map();
+    void draw_map();
 };

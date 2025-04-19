@@ -18,6 +18,8 @@ public:
     // GETTER
     std::map<std::string, Player *> *get_player_list();
     std::map<std::string, Map *> *get_map_list();
+
+    void run(int level);
 };
 
 

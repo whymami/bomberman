@@ -1,13 +1,23 @@
 #include "Player.hpp"
 
-Player::Player(Controller *control, Bomb *bomb, void *player_texture) : control(control), bomb(bomb), player_texture(player_texture)
+Player::Player(Controller *control, Bomb *bomb, void *player_texture, int x, int y) : control(control), bomb(bomb), player_texture(player_texture), x(x), y(y)
 {
+    
 }
 
 Player::~Player()
 {
-    delete &control;
-    delete &bomb;
+   if (bomb)
+   {
+       delete bomb;
+       bomb = nullptr;
+   }
+   if (control)
+   {
+       delete control;
+       control = nullptr;
+   }
+   
 }
 
 // GETTER
